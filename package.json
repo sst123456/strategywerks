@@ -1,7 +1,7 @@
 {
   "name": "todo-board",
   "version": "0.1.0",
-  "homepage": "https://github.com/sst123456/strategywerks.git",
+  "homepage": "https://sst123456.github.io/strategywerks",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
@@ -17,7 +17,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
