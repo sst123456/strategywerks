@@ -5,13 +5,19 @@ const TodoList = () => {
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState({ todo: '', completed: false, userId: 5 });
   const [editingTodo, setEditingTodo] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Fetch Todos from the API
   useEffect(() => {
     const fetchTodos = async () => {
-      const response = await fetch('https://dummyjson.com/todos');
-      const data = await response.json();
-      setTodos(data.todos);
+      try {
+        const response = await fetch('https://dummyjson.com/todos');
+        const data = await response.json();
+        setTodos(data.todos);
+      } catch (error) {
+        console.error("Error fetching todos: ", error);
+        alert("Failed to fetch todos. Please try again.");
+      }
     };
     fetchTodos();
   }, []);
@@ -45,8 +51,10 @@ const TodoList = () => {
         }
 
         const createdTodo = await response.json();
-        setTodos([...todos, createdTodo]);
+        setTodos((prevTodos) => [...prevTodos, createdTodo]);
         setNewTodo({ todo: '', completed: false, userId: 5 }); // Reset input
+        setSuccessMessage('Todo successfully added!');
+        setTimeout(() => setSuccessMessage(''), 4000); // Show success message for 4 seconds
       } catch (error) {
         console.error('Error creating todo:', error);
         alert('Failed to create todo. Please try again.');
@@ -59,16 +67,22 @@ const TodoList = () => {
     setEditingTodo(todo);
   };
 
+  // Handle cancel editing todo
+  const handleCancelEdit = () => {
+    setEditingTodo(null); // Reset editing state to stop editing
+  };
+
   // Handle updating todo (completing or uncompleting)
   const handleUpdateTodo = async () => {
     if (editingTodo) {
       const updatedTodo = {
-        completed: !editingTodo.completed,
+        completed: !editingTodo.completed, // Toggle the completed status
+        todo: editingTodo.todo, // Ensure we send the todo title if it's also being edited
       };
 
       try {
         const response = await fetch(`https://dummyjson.com/todos/${editingTodo.id}`, {
-          method: 'PUT', // or PATCH
+          method: 'PUT', // Or PATCH
           headers: {
             'Content-Type': 'application/json',
           },
@@ -76,12 +90,22 @@ const TodoList = () => {
         });
 
         if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Error:', errorData);
           throw new Error(`Error: ${response.statusText}`);
         }
 
         const updatedTodoResponse = await response.json();
-        setTodos(todos.map((todo) => (todo.id === updatedTodoResponse.id ? updatedTodoResponse : todo)));
-        setEditingTodo(null); // Close the editing view
+
+        // Update the todo list state with the updated todo
+        setTodos((prevTodos) =>
+          prevTodos.map((todo) => (todo.id === updatedTodoResponse.id ? updatedTodoResponse : todo))
+        );
+
+        // Reset editing state after update
+        setEditingTodo(null);
+
+        console.log('Todo updated successfully:', updatedTodoResponse);
       } catch (error) {
         console.error('Error updating todo:', error);
         alert('Failed to update todo. Please try again.');
@@ -101,16 +125,33 @@ const TodoList = () => {
       }
 
       const deletedTodo = await response.json();
-      setTodos(todos.filter((todo) => todo.id !== deletedTodo.id)); // Remove deleted todo from state
+      setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== deletedTodo.id)); // Remove deleted todo from state
     } catch (error) {
       console.error('Error deleting todo:', error);
       alert('Failed to delete todo. Please try again.');
     }
   };
 
+  // Drag and drop handlers
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.setData('dragIndex', index);
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    const dragIndex = e.dataTransfer.getData('dragIndex');
+    const draggedTodo = todos[dragIndex];
+    const updatedTodos = [...todos];
+    updatedTodos.splice(dragIndex, 1);
+    updatedTodos.splice(dropIndex, 0, draggedTodo);
+    setTodos(updatedTodos);
+  };
+
   return (
     <div className="container">
       <h2>Todo List</h2>
+
+      {/* Success Message */}
+      {successMessage && <div className="success-message">{successMessage}</div>}
 
       {/* New Todo Form */}
       <div className="new-todo-form">
@@ -135,8 +176,14 @@ const TodoList = () => {
           </tr>
         </thead>
         <tbody>
-          {todos.map((todo) => (
-            <tr key={todo.id}>
+          {todos.map((todo, index) => (
+            <tr
+              key={todo.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDrop={(e) => handleDrop(e, index)}
+              onDragOver={(e) => e.preventDefault()}
+            >
               <td>{todo.id}</td>
               <td>
                 {editingTodo?.id === todo.id ? (
@@ -151,12 +198,17 @@ const TodoList = () => {
                   todo.todo
                 )}
               </td>
-              <td>{todo.completed ? 'Completed' : 'Pending'}</td>
               <td>
-                <button onClick={() => handleUpdateTodo()}>
-                  {todo.completed ? 'Mark as Pending' : 'Mark as Completed'}
-                </button>
-                <button onClick={() => handleEditTodo(todo)}>
+                {editingTodo?.id === todo.id ? (
+                  <button onClick={handleUpdateTodo}>
+                    {todo.completed ? 'Mark as Pending' : 'Mark as Completed'}
+                  </button>
+                ) : (
+                  todo.completed ? 'Completed' : 'Pending'
+                )}
+              </td>
+              <td>
+                <button onClick={() => editingTodo?.id === todo.id ? handleCancelEdit() : handleEditTodo(todo)}>
                   {editingTodo?.id === todo.id ? 'Cancel' : 'Edit'}
                 </button>
                 {editingTodo?.id === todo.id && (
