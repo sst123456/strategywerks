@@ -142,6 +142,31 @@ const TodoList = () => {
     }
   };
 
+  // Drag and Drop Handlers
+  const handleDragStart = (e, index) => {
+    // Set the dragged index as a custom data attribute to allow drop
+    e.dataTransfer.setData('draggedTodoIndex', index);
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    const dragIndex = e.dataTransfer.getData('draggedTodoIndex');  // Get the dragged index
+    const draggedTodo = todos[dragIndex];  // Get the dragged todo
+    const updatedTodos = [...todos];  // Clone the todos array
+
+    // Remove the dragged item from its original position
+    updatedTodos.splice(dragIndex, 1);
+
+    // Insert the dragged todo at the new drop position
+    updatedTodos.splice(dropIndex, 0, draggedTodo);
+
+    // Update the state with the new todos order
+    setTodos(updatedTodos);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();  // Prevent default behavior to allow the drop
+  };
+
   return (
     <div className="container">
       <h2>Todo List</h2>
@@ -173,7 +198,13 @@ const TodoList = () => {
         </thead>
         <tbody>
           {todos.map((todo, index) => (
-            <tr key={todo.id}>
+            <tr
+              key={todo.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDrop={(e) => handleDrop(e, index)}
+              onDragOver={handleDragOver}
+            >
               <td>{todo.id}</td>
               <td>
                 {editingTodo?.id === todo.id ? (
