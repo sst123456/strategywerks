@@ -4,6 +4,10 @@ h2 {
   font-size: 1.8rem;
 }
 
+.list-wrapper {
+  min-height: 500px;
+}
+
 .new-todo-form {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -66,5 +70,20 @@ h2 {
   text-align: center;
   margin-bottom: 15px;
   border-radius: 5px;
-  font-size: 1rem;
+  font-size: 18px;
+}
+
+.loader {
+  font-size: 24px;
+  color: #4caf50;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.editing td {
+  background-color: #f1f1f1;
+}
+
+.editing input {
+  background-color: #fff;
 }
