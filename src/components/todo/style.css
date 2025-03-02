@@ -11,6 +11,7 @@
 .new-todo-form input {
   padding: 8px;
   margin-right: 8px;
+
 }
 
 .new-todo-form button {
@@ -43,8 +44,16 @@
   cursor: pointer;
 }
 
+.todo-item input {
+  width: 100%;
+}
+
+.button-wrapper {
+  padding-top: 10px;
+}
+
 .todo-item button {
-  margin-left: 10px;
+  margin: 0 5px 0 0;
 }
 
 .loader {
@@ -61,7 +70,17 @@ input[type="text"] {
 }
 
 @media screen and (max-width:767px) {
+
+
   .kanban-board {
     display: block;
+  }
+
+  .kanban-lane {
+    min-height: 0;
+  }
+
+  .loader {
+    min-height: 300px;
   }
 }
