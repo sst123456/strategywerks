@@ -47,7 +47,9 @@ const TodoList = () => {
         });
 
         if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
+          const errorData = await response.json();
+          console.error('Error:', errorData);
+          throw new Error('Error creating todo');
         }
 
         const createdTodo = await response.json();
@@ -92,7 +94,7 @@ const TodoList = () => {
         if (!response.ok) {
           const errorData = await response.json();
           console.error('Error:', errorData);
-          throw new Error(`Error: ${response.statusText}`);
+          throw new Error('Error updating todo');
         }
 
         const updatedTodoResponse = await response.json();
