@@ -124,7 +124,7 @@ const TodoList = () => {
   };
 
   return (
-    <div className="kanban-container">
+    <div className="container">
       <h2>Todo Board</h2>
 
       {/* New Todo Form */}
