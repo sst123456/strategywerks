@@ -1,26 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import './style.css';
-import { apiCall } from '../../utils/apiCall';
+import React, { useEffect, useState } from "react";
+import "./style.css";
 
 const TodoList = () => {
   const [todos, setTodos] = useState([]);
-  const [newTodo, setNewTodo] = useState({ todo: '', completed: false });
-  const [editingTodo, setEditingTodo] = useState(null);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [newTodo, setNewTodo] = useState({ todo: "", completed: null });
   const [nextId, setNextId] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [editingTodo, setEditingTodo] = useState(null);
 
   // Fetch Todos from the API
   useEffect(() => {
     const fetchTodos = async () => {
       setLoading(true);
-      const data = await apiCall('https://dummyjson.com/todos');
-      if (data && data.todos) {
+      try {
+        const response = await fetch("https://dummyjson.com/todos");
+        const data = await response.json();
         setTodos(data.todos);
-        const highestId = Math.max(...data.todos.map(todo => todo.id));
+        const highestId = Math.max(...data.todos.map((todo) => todo.id), 0);
         setNextId(highestId + 1);
+      } catch (error) {
+        console.error("Error fetching todos:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchTodos();
   }, []);
@@ -28,7 +30,7 @@ const TodoList = () => {
   // Handle new todo input change
   const handleNewTodoChange = (e) => {
     const { name, value } = e.target;
-    setNewTodo(prev => ({ ...prev, [name]: value }));
+    setNewTodo((prev) => ({ ...prev, [name]: value }));
   };
 
   // Create new Todo
@@ -36,74 +38,113 @@ const TodoList = () => {
     if (newTodo.todo.trim()) {
       const newTodoData = { ...newTodo, id: nextId, userId: 5 };
 
-      const createdTodo = await apiCall('https://dummyjson.com/todos/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newTodoData),
-      });
-
-      if (createdTodo) {
-        setTodos(prev => [...prev, { ...createdTodo, id: nextId }]);
-        setNextId(prev => prev + 1);
-        setNewTodo({ todo: '', completed: false });
-        setSuccessMessage('Todo successfully added!');
-        setTimeout(() => setSuccessMessage(''), 4000);
+      try {
+        const response = await fetch("https://dummyjson.com/todos/add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newTodoData),
+        });
+        const createdTodo = await response.json();
+        setTodos((prev) => [...prev, { ...createdTodo, id: nextId }]);
+        setNextId((prev) => prev + 1);
+        setNewTodo({ todo: "", completed: null });
+      } catch (error) {
+        console.error("Error creating todo:", error);
       }
     }
   };
 
-  // Handle edit todo
-  const handleEditTodo = (todo) => setEditingTodo(todo);
-  const handleCancelEdit = () => setEditingTodo(null);
-
-  // Update Todo
-  const handleUpdateTodo = async () => {
-    if (editingTodo) {
-      const updatedTodo = { completed: !editingTodo.completed, todo: editingTodo.todo };
-      const updatedTodoResponse = await apiCall(
-        `https://dummyjson.com/todos/${editingTodo.id}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedTodo),
-        }
-      );
-      if (updatedTodoResponse) {
-        setTodos(prevTodos =>
-          prevTodos.map(todo => (todo.id === updatedTodoResponse.id ? updatedTodoResponse : todo))
-        );
-        setEditingTodo(null);
-      }
-    }
-  };
-
-  // Handle delete todo
-  const handleDeleteTodo = async (id) => {
-    const response = await apiCall(`https://dummyjson.com/todos/${id}`, 
-     { method: 'DELETE' });
-    if (response) setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
-  };
-
-  // Handle drag and drop logic
-  const handleDragStart = (e, index) => {
-    e.dataTransfer.setData('draggedTodoIndex', index);
-  };
-  const handleDrop = (e, dropIndex) => {
-    const dragIndex = e.dataTransfer.getData('draggedTodoIndex');
-    const draggedTodo = todos[dragIndex];
+  // Handle status update after drag and drop
+  const handleDrop = (status, e) => {
+    e.preventDefault();
+    const todoId = e.dataTransfer.getData("todoId");
     const updatedTodos = [...todos];
-    updatedTodos.splice(dragIndex, 1);
-    updatedTodos.splice(dropIndex, 0, draggedTodo);
-    setTodos(updatedTodos);
+    const draggedTodo = updatedTodos.find((todo) => todo.id === parseInt(todoId));
+
+    if (draggedTodo) {
+      if (status === "Completed") {
+        draggedTodo.completed = true;
+      } else if (status === "In Progress") {
+        draggedTodo.completed = null; // If it's in progress, set completed to null
+      } else if (status === "Pending") {
+        draggedTodo.completed = false;
+      }
+
+      setTodos(updatedTodos);
+      updateTodoStatus(draggedTodo);
+    }
   };
-  const handleDragOver = (e) => e.preventDefault();
+
+  // Update todo status via API
+  const updateTodoStatus = async (todo) => {
+    try {
+      const response = await fetch(`https://dummyjson.com/todos/${todo.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: todo.completed, todo: todo.todo }),
+      });
+      await response.json();
+    } catch (error) {
+      console.error("Error updating todo status:", error);
+    }
+  };
+
+  // Handle drag start
+  const handleDragStart = (e, todo) => {
+    e.dataTransfer.setData("todoId", todo.id); // Transfer todoId on drag
+  };
+
+  // Edit Todo
+  const handleEditTodo = (todo) => {
+    setEditingTodo(todo);
+  };
+
+  // Cancel Edit
+  const handleCancelEdit = () => {
+    setEditingTodo(null);
+  };
+
+  // Save Updated Todo
+  const handleSaveEdit = async (todoId) => {
+    if (editingTodo && editingTodo.todo.trim()) {
+      const updatedTodo = { ...editingTodo };
+  
+      try {
+        // Log to check the data being sent
+        console.log("Updating todo with ID:", todoId);
+        console.log("Updated todo:", updatedTodo);
+  
+        // Make PUT request to update the todo on the backend
+        const response = await fetch(`https://dummyjson.com/todos/${todoId}`, {
+          method: "PUT", // Use PUT to update the todo
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            completed: updatedTodo.completed, // update the completed status
+            todo: updatedTodo.todo, // update the todo text
+          }),
+        });
+  
+        if (response.ok) {
+          const updatedData = await response.json();
+  
+          // Update the local state with the updated todo
+          setTodos((prevTodos) =>
+            prevTodos.map((todo) => (todo.id === updatedData.id ? updatedData : todo))
+          );
+          setEditingTodo(null); // Close the editing mode after saving
+        } else {
+          console.error("Failed to update the todo:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error saving todo:", error);
+      }
+    }
+  };
+  
 
   return (
-    <div className="container">
+    <div className="kanban-container">
       <h2>Todo Board</h2>
-
-      {/* Success Message */}
-      {successMessage && <div className="success-message">{successMessage}</div>}
 
       {/* New Todo Form */}
       <div className="new-todo-form">
@@ -117,70 +158,63 @@ const TodoList = () => {
         <button onClick={handleCreateTodo}>Create Todo</button>
       </div>
 
-      <div className="list-wrapper">
-        {loading && <div className="loader">Loading...</div>}
+      {/* Kanban Board */}
+      {
+        loading ? <div className="kanban-lane loader">Loading...</div> :
+     
+      <div className="kanban-board">
+        {["Pending", "In Progress", "Completed"].map((status) => (
+          <div
+            key={status}
+            className="kanban-lane"
+            onDrop={(e) => handleDrop(status, e)}
+            onDragOver={(e) => e.preventDefault()}
+          >
+            <h3>{status}</h3>
+            <div className="todo-list">
+              {todos
+                .filter((todo) => {
+                  if (status === "Pending") return todo.completed === false;
+                  if (status === "In Progress") return todo.completed === null;
+                  return todo.completed === true;
+                })
+                .map((todo) => (
+                  <div
+                    key={todo.id}
+                    className="todo-item"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, todo)}
+                  >
+                    {/* Editable Todo */}
+                    {editingTodo?.id === todo.id ? (
+                      <div>
+                        <input
+                          type="text"
+                          value={editingTodo.todo}
+                          onChange={(e) =>
+                            setEditingTodo({
+                              ...editingTodo,
+                              todo: e.target.value,
+                            })
+                          }
+                        />
+                        <button onClick={()=>handleSaveEdit(todo.id)}>Save</button>
+                        <button onClick={handleCancelEdit}>Cancel</button>
+                      </div>
+                    ) : (
+                      <>
+                        <span>{todo.todo}</span>
+                        <button onClick={() => handleEditTodo(todo)}>Edit</button>
+                      </>
+                    )}
+                  </div>
+                ))}
+            </div>
+          </div>
+        ))}
 
-        {/* Todo List Table */}
-        {todos.length > 0 && (
-          <table className="todo-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Todo</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {todos.map((todo, index) => (
-                <tr
-                  key={todo.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, index)}
-                  onDrop={(e) => handleDrop(e, index)}
-                  onDragOver={handleDragOver}
-                  className={editingTodo?.id === todo.id ? 'editing' : ''}
-                >
-                  <td>{todo.id}</td>
-                  <td>
-                    {editingTodo?.id === todo.id ? (
-                      <input
-                        type="text"
-                        value={editingTodo.todo}
-                        onChange={(e) =>
-                          setEditingTodo((prev) => ({ ...prev, todo: e.target.value }))
-                        }
-                      />
-                    ) : (
-                      todo.todo
-                    )}
-                  </td>
-                  <td>
-                    {editingTodo?.id === todo.id ? (
-                      <button onClick={handleUpdateTodo}>
-                        {todo.completed ? 'Mark as Pending' : 'Mark as Completed'}
-                      </button>
-                    ) : (
-                      todo.completed ? 'Completed' : 'Pending'
-                    )}
-                  </td>
-                  <td>
-                    <button
-                      onClick={() => editingTodo?.id === todo.id ? handleCancelEdit() : handleEditTodo(todo)}
-                    >
-                      {editingTodo?.id === todo.id ? 'Cancel' : 'Edit'}
-                    </button>
-                    {editingTodo?.id === todo.id && (
-                      <button onClick={handleUpdateTodo}>Save</button>
-                    )}
-                    <button onClick={() => handleDeleteTodo(todo.id)}>Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
       </div>
+ }
     </div>
   );
 };
