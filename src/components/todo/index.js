@@ -3,9 +3,10 @@ import './style.css';
 
 const TodoList = () => {
   const [todos, setTodos] = useState([]);
-  const [newTodo, setNewTodo] = useState({ todo: '', completed: false, userId: 5 });
+  const [newTodo, setNewTodo] = useState({ todo: '', completed: false });
   const [editingTodo, setEditingTodo] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [nextId, setNextId] = useState(1);  // Start from ID 1 (or highest value if exists)
 
   // Fetch Todos from the API
   useEffect(() => {
@@ -14,6 +15,12 @@ const TodoList = () => {
         const response = await fetch('https://dummyjson.com/todos');
         const data = await response.json();
         setTodos(data.todos);
+
+        // Find the highest ID from the todos and set nextId correctly
+        if (data.todos.length > 0) {
+          const highestId = Math.max(...data.todos.map(todo => todo.id)); // Get max ID
+          setNextId(highestId + 1); // Set the next ID to highestId + 1
+        }
       } catch (error) {
         console.error("Error fetching todos: ", error);
         alert("Failed to fetch todos. Please try again.");
@@ -32,9 +39,10 @@ const TodoList = () => {
   const handleCreateTodo = async () => {
     if (newTodo.todo.trim()) {
       const newTodoData = {
+        id: nextId, // Use the next available ID for the new todo
         todo: newTodo.todo,
         completed: false,
-        userId: newTodo.userId,
+        userId: 5,
       };
 
       try {
@@ -47,16 +55,17 @@ const TodoList = () => {
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Error:', errorData);
-          throw new Error('Error creating todo');
+          throw new Error(`Error: ${response.statusText}`);
         }
 
         const createdTodo = await response.json();
-        setTodos((prevTodos) => [...prevTodos, createdTodo]);
-        setNewTodo({ todo: '', completed: false, userId: 5 }); // Reset input
+
+        // Even though the API might return an ID, we use our own ID to avoid duplication.
+        setTodos((prevTodos) => [...prevTodos, { ...createdTodo, id: nextId }]);
+        setNextId(prevId => prevId + 1); // Increment the next ID for future todos
+        setNewTodo({ todo: '', completed: false });
         setSuccessMessage('Todo successfully added!');
-        setTimeout(() => setSuccessMessage(''), 4000); // Show success message for 4 seconds
+        setTimeout(() => setSuccessMessage(''), 4000);
       } catch (error) {
         console.error('Error creating todo:', error);
         alert('Failed to create todo. Please try again.');
@@ -84,7 +93,7 @@ const TodoList = () => {
 
       try {
         const response = await fetch(`https://dummyjson.com/todos/${editingTodo.id}`, {
-          method: 'PUT', // Or PATCH
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -92,11 +101,10 @@ const TodoList = () => {
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Error:', errorData);
-          throw new Error('Error updating todo');
+          throw new Error(`Error: ${response.statusText}`);
         }
 
+        // The updatedTodoResponse should be returned directly if the PUT is successful
         const updatedTodoResponse = await response.json();
 
         // Update the todo list state with the updated todo
@@ -126,26 +134,12 @@ const TodoList = () => {
         throw new Error(`Error: ${response.statusText}`);
       }
 
-      const deletedTodo = await response.json();
-      setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== deletedTodo.id)); // Remove deleted todo from state
+      // After successful deletion, filter out the todo from the state
+      setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id)); 
     } catch (error) {
       console.error('Error deleting todo:', error);
       alert('Failed to delete todo. Please try again.');
     }
-  };
-
-  // Drag and drop handlers
-  const handleDragStart = (e, index) => {
-    e.dataTransfer.setData('dragIndex', index);
-  };
-
-  const handleDrop = (e, dropIndex) => {
-    const dragIndex = e.dataTransfer.getData('dragIndex');
-    const draggedTodo = todos[dragIndex];
-    const updatedTodos = [...todos];
-    updatedTodos.splice(dragIndex, 1);
-    updatedTodos.splice(dropIndex, 0, draggedTodo);
-    setTodos(updatedTodos);
   };
 
   return (
@@ -179,13 +173,7 @@ const TodoList = () => {
         </thead>
         <tbody>
           {todos.map((todo, index) => (
-            <tr
-              key={todo.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDrop={(e) => handleDrop(e, index)}
-              onDragOver={(e) => e.preventDefault()}
-            >
+            <tr key={todo.id}>
               <td>{todo.id}</td>
               <td>
                 {editingTodo?.id === todo.id ? (

@@ -45,6 +45,10 @@ h2 {
   color: white;
 }
 
+.todo-table tr {
+  cursor: grab;
+}
+
 .todo-table tr:hover {
   background-color: #f1f1f1;
 }
