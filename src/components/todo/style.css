@@ -38,7 +38,16 @@
   padding: 10px;
   border: 1px solid #ddd;
   background-color: #fff;
-  cursor: pointer;
+  position: relative;
+  padding-right: 60px;
+}
+
+.action-btns {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  margin-top: -8px;
+  line-height: 1;
 }
 
 .todo-item input {
@@ -66,7 +75,7 @@ input[type="text"] {
   margin-right: 8px;
 }
 
-.edit-btn {
+.action-btn {
   margin-left: 5px;
   cursor: pointer;
   font-size: 14px;
