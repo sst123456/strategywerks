@@ -22,10 +22,13 @@ body {
 
 button {
   color: #fff;
-  padding: 6px 12px;
+  font-weight: 700;
+  line-height: 30px;
+  padding: 0 12px;
   margin: 5px;
   cursor: pointer;
-  background-color: #333;
+  background-color: #4CAF50;
+  border: none;
   border-radius: 5px;
 }
 

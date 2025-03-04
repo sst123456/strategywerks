@@ -14,10 +14,6 @@
 
 }
 
-.new-todo-form button {
-  padding: 8px 16px;
-}
-
 .kanban-board {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -34,6 +30,7 @@
 
 .kanban-lane h3 {
   text-align: center;
+  margin-bottom: 5px;
 }
 
 .todo-item {
@@ -67,6 +64,13 @@
 input[type="text"] {
   padding: 8px;
   margin-right: 8px;
+}
+
+.edit-btn {
+  margin-left: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  vertical-align: top;
 }
 
 @media screen and (max-width:767px) {

@@ -136,7 +136,7 @@ const TodoList = () => {
           value={newTodo.todo}
           onChange={handleNewTodoChange}
         />
-        <button onClick={handleCreateTodo}>Create Todo</button>
+        <button onClick={handleCreateTodo}>&#128221; Create Todo</button>
       </div>
 
       {/* Kanban Board */}
@@ -179,16 +179,15 @@ const TodoList = () => {
                             }
                           />
                           <div className="button-wrapper">
-                          <button onClick={handleSaveEdit}>Save</button>
-                          <button onClick={handleCancelEdit}>Cancel</button>
+                          <button onClick={()=>handleCancelEdit()}>❌ Cancel</button>
+                          <button onClick={()=>handleSaveEdit()}>💾 Save</button>
                           </div>
                         </div>
                       ) : (
                         <>
-                          <span>{todo.todo}</span>
-                          <div className="button-wrapper">
-                          <button onClick={() => handleEditTodo(todo)}>Edit</button>
-                          </div>
+                          <div>{todo.todo}<span 
+                          onClick={() => handleEditTodo(todo)} className="edit-btn">✏️</span></div>
+                          
                         </>
                       )}
                     </div>
