@@ -1,70 +1,93 @@
-# Getting Started with Create React App
+# Todo Board
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A simple and interactive Todo Board application built using React. This app allows users to create, update, delete, and organize tasks in a kanban-style board. It also supports drag-and-drop functionality to change the status of tasks between different categories (e.g., "Pending," "In Progress," and "Completed").
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+- **Create Todos**: Add new tasks with a title.
+- **Edit Todos**: Edit the content of a task.
+- **Delete Todos**: Remove tasks either locally or from the API.
+- **Drag and Drop**: Move tasks between different categories: "Pending," "In Progress," and "Completed."
+- **API Integration**: The app interacts with a dummy API for persisting tasks, allowing tasks to be fetched, created, and deleted from a backend.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Technologies Used
 
-### `npm test`
+- **React**: JavaScript library for building user interfaces.
+- **CSS**: Styling the app for a basic but responsive layout.
+- **Fetch API**: Interacting with a dummy JSON API to create, fetch, update, and delete tasks.
+- **Local State Management**: Using React's `useState` and `useEffect` hooks for managing the application's state.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## Installation
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+To run the project locally, follow these steps:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Prerequisites
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- Node.js (v14.x or higher)
+- npm (v6.x or higher)
 
-### `npm run eject`
+### Steps
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+1. **Clone the repository**:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+git clone https://github.com/your-username/todo-board.git
+cd todo-board
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+ --- 
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Install dependencies:
+npm install
 
-## Learn More
+--
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Start the development server:
+npm start
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Open your browser and go to http://localhost:3000 to see the application in action.
 
-### Code Splitting
+---
+## How It Works
+Fetching Todos: On initial load, the app fetches a list of todos from a dummy JSON API (https://dummyjson.com/todos).
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+--
 
-### Analyzing the Bundle Size
+## Creating Todos:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Users can create new todos by typing a title and clicking the "Create Todo" button.
+A unique ID is assigned to each new todo based on the current timestamp.
+The new todo is added to the backend API and updated in the local state.
+Editing Todos:
 
-### Making a Progressive Web App
+Users can click on the "Edit" button next to a todo item, which will show an input field to modify the todo's title.
+Changes are updated in the local state, and users can cancel or save the changes.
+Deleting Todos:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Users can delete tasks either locally (if newly created) or by calling the API (for todos fetched from the backend).
+Drag and Drop:
 
-### Advanced Configuration
+Tasks can be dragged between columns labeled "Pending," "In Progress," and "Completed."
+The task's completion status is updated when it is dropped in a new column.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+--
 
-### Deployment
+## API Endpoints
+This app interacts with the following endpoints:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+1. Fetch Todos: GET https://dummyjson.com/todos
+2. Create Todo: POST https://dummyjson.com/todos/add
+3. Update Todo: PUT https://dummyjson.com/todos/{id}
+4. Delete Todo: DELETE https://dummyjson.com/todos/{id}
 
-### `npm run build` fails to minify
+### Folder Structure
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+src/
+├── App.js                # Main component to render the todo board
+├── components/todo       # Contains all logic related to todo management      
+└── index.js              # Entry point for React app
+└── utils / apiRequest    # For API call
