@@ -5,7 +5,7 @@ import { apiRequest } from "../../utils/apiRequest";
 // Fetch Todos from API
 const fetchTodosFromApi = async () => {
   const data = await apiRequest("https://dummyjson.com/todos");
-  return Array.isArray(data?.todos) ? data.todos : []; // Ensure it returns an array
+  return Array.isArray(data?.todos) ? data.todos : []; 
 };
 
 // Create Todo in API
@@ -16,34 +16,18 @@ const createTodoInApi = async (newTodo) => {
     body: JSON.stringify(newTodo),
   });
   const createdTodo = await response.json();
-  return createdTodo; // Ensure it returns the created todo with the ID
-};
-
-// Update Todo in API with the provided fetch method
-const updateTodoInApi = async (todo) => {
-  const response = await fetch(`https://dummyjson.com/todos/${todo.id}`, {
-    method: "PUT", // or PATCH
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      completed: todo.completed, // update the completed status
-      todo: todo.todo, // keep the todo text as it is
-    }),
-  });
-  const updatedTodo = await response.json();
-  return updatedTodo;
+  return createdTodo; 
 };
 
 // Delete Todo from API
 const deleteTodoInApi = async (id) => {
-  const response = await fetch(`https://dummyjson.com/todos/${id}`, {
-    method: "DELETE",
-  });
-  console.log(response);  // Log the response
+  const response = await fetch(`https://dummyjson.com/todos/${id}`, { method: "DELETE" });
   return response.ok;
 };
 
+// TodoList Component
 const TodoList = () => {
-  const [todos, setTodos] = useState([]); // Initialize todos as an empty array
+  const [todos, setTodos] = useState([]); 
   const [newTodo, setNewTodo] = useState({ todo: "", completed: null });
   const [loading, setLoading] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
@@ -52,46 +36,70 @@ const TodoList = () => {
   useEffect(() => {
     const fetchTodos = async () => {
       setLoading(true);
-      const todos = await fetchTodosFromApi(); // Ensure it is always an array
-      setTodos(todos); // This should now always be an array
+      const todos = await fetchTodosFromApi(); 
+      setTodos(todos); 
       setLoading(false);
     };
     fetchTodos();
   }, []);
 
+  // Handle input change for new todo
   const handleNewTodoChange = (e) => {
     const { name, value } = e.target;
     setNewTodo((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Create new Todo and rely on backend for the ID
+  // Handle creating a new Todo (with unique ID assigned locally)
   const handleCreateTodo = async () => {
     if (newTodo.todo.trim()) {
-      const createdTodo = await createTodoInApi({
+      const newTodoWithId = {
         ...newTodo,
-        userId: 30,
-      });
+        id: Date.now(), // Assigning unique ID based on current timestamp
+        isNew: true, // Mark it as a new todo
+      };
 
-      if (createdTodo && createdTodo.id) {
-        setTodos((prev) => [...prev, createdTodo]); // Add the created todo to state
-        setNewTodo({ todo: "", completed: null }); // Reset the new todo form
+      setTodos((prev) => [...prev, newTodoWithId]); // Update the state immediately
+
+      // Optionally, simulate an API call to add the new todo
+      await createTodoInApi(newTodoWithId);
+      setNewTodo({ todo: "", completed: null }); // Reset the form
+    }
+  };
+
+  // Handle deleting a Todo
+  const handleDeleteTodo = async (id) => {
+    const todoToDelete = todos.find((todo) => todo.id === id);
+        if (todoToDelete.isNew) {
+      setTodos(todos.filter((todo) => todo.id !== id)); // Remove from local state
+      console.log("Deleted local todo successfully");
+    } else {
+      // If it's a fetched todo, call the API to delete it
+      const isDeleted = await deleteTodoInApi(id);
+      if (isDeleted) {
+        setTodos(todos.filter((todo) => todo.id !== id)); // Remove from state
+        console.log("Todo deleted successfully");
       } else {
-        console.error("Failed to create todo: No ID returned from API");
+        console.error("Failed to delete todo with id:", id);
       }
     }
   };
 
-  // Handle deleting a todo task
-  const handleDeleteTodo = async (id) => {
-    console.log(`Attempting to delete todo with id: ${id}`);  // Log the ID
-    const isDeleted = await deleteTodoInApi(id);
-    if (isDeleted) {
-      setTodos(todos.filter((todo) => todo.id !== id)); // Remove deleted todo from the state
-    } else {
-      console.error("Failed to delete todo");
-    }
-  }; 
+  // Handle editing a Todo
+  const handleEditTodo = (todo) => setEditingTodo(todo);
 
+  const handleCancelEdit = () => setEditingTodo(null);
+
+  const handleSaveEdit = async () => {
+    if (editingTodo && editingTodo.todo.trim()) {
+      const updatedTodo = editingTodo;
+      setTodos((prevTodos) =>
+        prevTodos.map((todo) => (todo.id === updatedTodo.id ? updatedTodo : todo))
+      );
+      setEditingTodo(null);
+    }
+  };
+
+  // Drag and drop handlers
   const handleDrop = (status, e) => {
     e.preventDefault();
     const todoId = e.dataTransfer.getData("todoId");
@@ -99,46 +107,13 @@ const TodoList = () => {
     const draggedTodo = updatedTodos.find((todo) => todo.id === parseInt(todoId));
 
     if (draggedTodo) {
-      draggedTodo.completed =
-        status === "Completed" ? true : status === "In Progress" ? null : false;
+      draggedTodo.completed = status === "Completed" ? true : status === "In Progress" ? null : false;
       setTodos(updatedTodos);
-      updateTodoStatus(draggedTodo);
-    }
-  };
-
-  const updateTodoStatus = async (todo) => {
-    const updatedTodo = await updateTodoInApi(todo);
-    if (updatedTodo) {
-      setTodos((prevTodos) =>
-        prevTodos.map((t) => (t.id === updatedTodo.id ? updatedTodo : t))
-      );
     }
   };
 
   const handleDragStart = (e, todo) => {
     e.dataTransfer.setData("todoId", todo.id);
-  };
-
-  const handleEditTodo = (todo) => {
-    setEditingTodo(todo);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingTodo(null);
-  };
-
-  const handleSaveEdit = async () => {
-    if (editingTodo && editingTodo.todo.trim()) {
-      const updatedTodo = await updateTodoInApi(editingTodo);
-
-      if (updatedTodo) {
-        // Update the todo in the local state
-        setTodos((prevTodos) =>
-          prevTodos.map((todo) => (todo.id === updatedTodo.id ? updatedTodo : todo))
-        );
-        setEditingTodo(null); // Reset editing state
-      }
-    }
   };
 
   return (
@@ -190,27 +165,18 @@ const TodoList = () => {
                             type="text"
                             value={editingTodo.todo}
                             onChange={(e) =>
-                              setEditingTodo({
-                                ...editingTodo,
-                                todo: e.target.value,
-                              })
+                              setEditingTodo({ ...editingTodo, todo: e.target.value })
                             }
                           />
-                          <div className="button-wrapper">
-                            <button onClick={handleCancelEdit}>❌ Cancel</button>
-                            <button onClick={handleSaveEdit}>💾 Save</button>
-                          </div>
+                          <button onClick={handleCancelEdit}>❌ Cancel</button>
+                          <button onClick={handleSaveEdit}>💾 Save</button>
                         </>
                       ) : (
                         <>
                           {todo.todo}
                           <div className="action-btns">
-                            <span onClick={() => handleEditTodo(todo)} className="action-btn">
-                              ✏️
-                            </span>
-                            <span onClick={() => handleDeleteTodo(todo.id)} className="action-btn">
-                              🗑️
-                            </span>
+                            <button onClick={() => handleEditTodo(todo)} className="action-btn">✏️</button>
+                            <button onClick={() => handleDeleteTodo(todo.id)} className="action-btn">🗑️</button>
                           </div>
                         </>
                       )}
